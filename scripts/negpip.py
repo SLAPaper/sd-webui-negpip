@@ -9,6 +9,7 @@ from modules import prompt_parser
 
 from modules import shared
 from modules.script_callbacks import CFGDenoiserParams, on_cfg_denoiser, on_ui_settings
+from modules.devices import autocast
 
 debug = False
 debug_p = False
@@ -212,12 +213,13 @@ class Script(modules.scripts.Script):
                     stepconds.append([step,regionconds])
                 outconds.append(stepconds)
             return outconds
-            
-        self.conds_all = calcconds(nip)
-        self.unconds_all = calcconds(pin)
 
-        if self.hrp: self.hr_conds_all = calcconds(hr_nip)
-        if self.hrn: self.hr_unconds_all = calcconds(hr_pin)
+        with autocast():
+            self.conds_all = calcconds(nip)
+            self.unconds_all = calcconds(pin)
+
+            if self.hrp: self.hr_conds_all = calcconds(hr_nip)
+            if self.hrn: self.hr_unconds_all = calcconds(hr_pin)
 
         #print(self.conds_all)
         #print(self.unconds_all)
@@ -404,7 +406,6 @@ def counter(isxl):
 
 def main_foward(self, module, x, context, mask, additional_tokens, n_times_crossframe_attn_in_self, tokens):
     h = module.heads
-    context = context.to(x.dtype)
     q = module.to_q(x)
 
     context = atm.default(context, x)
