@@ -2,9 +2,11 @@ import gradio as gr
 import torch
 import re
 import json
-import ldm.modules.attention as atm
+import ldm.modules.attention as atm  # type: ignore
+import modules.scripts
 import modules.ui
 import modules
+from contextlib import nullcontext
 from modules import prompt_parser
 
 from modules import shared
@@ -15,7 +17,7 @@ debug = False
 debug_p = False
 
 try:
-    from ldm_patched.modules import model_management
+    from ldm_patched.modules import model_management  # type: ignore
     forge = True
 except:
     forge = False
@@ -296,7 +298,6 @@ class Script(modules.scripts.Script):
                 self.unconds = uncondslist
                 self.untokens = untokenslist
 
-from pprint import pprint
 
 def unload(self,p):
     if hasattr(self,"handle"):
@@ -406,6 +407,8 @@ def counter(isxl):
 
 def main_foward(self, module, x, context, mask, additional_tokens, n_times_crossframe_attn_in_self, tokens):
     h = module.heads
+    if isinstance(autocast(), nullcontext):  # autocast is somehow disabled, so use forced dtype conversion
+        context = context.to(x.dtype)
     q = module.to_q(x)
 
     context = atm.default(context, x)
@@ -441,7 +444,6 @@ def main_foward(self, module, x, context, mask, additional_tokens, n_times_cross
 
     return module.to_out(out)
 
-import inspect
 
 def hook_forwards(self, root_module: torch.nn.Module, remove=False):
     for name, module in root_module.named_modules():
